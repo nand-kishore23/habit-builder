@@ -1,0 +1,117 @@
+import time
+import datetime
+import os
+
+# ================== TERMINAL COLORS ==================
+RESET = "\033[0m"
+NEON = "\033[96m"
+WHITE = "\033[97m"
+GRAY = "\033[90m"
+GREEN = "\033[92m"
+RED = "\033[91m"
+
+# ================== DATA ==================
+habit = {
+    "name": "Study",
+    "level": 1,              # 1 = Easy, 2 = Medium, 3 = Hard
+    "minutes": 5,
+    "history": [],           # stores completion dates
+}
+
+energy_levels = {
+    "1": ("Low", 15),
+    "2": ("Medium", 25),
+    "3": ("High", 45),
+}
+
+# ================== UTILS ==================
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
+
+def banner():
+    print(NEON + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("     HABIT BUILDER APP")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + RESET)
+
+def today():
+    return datetime.date.today()
+
+# ================== LOGIC ==================
+def consistency_last_21_days():
+    count = 0
+    for d in habit["history"]:
+        if (today() - d).days <= 21:
+            count += 1
+    return count
+
+def increase_difficulty():
+    if habit["level"] < 3:
+        habit["level"] += 1
+        habit["minutes"] += 5
+
+def show_status():
+    print(WHITE + f"Habit: {habit['name']}")
+    print(GRAY + f"Level: {habit['level']} | Minutes: {habit['minutes']}")
+    print(GRAY + f"Consistency (21 days): {consistency_last_21_days()}/21\n" + RESET)
+
+# ================== POMODORO ==================
+def start_pomodoro(focus_minutes):
+    clear()
+    print(NEON + f"FOCUS TIME: {focus_minutes} MINUTES\n" + RESET)
+
+    seconds = focus_minutes * 60
+    while seconds > 0:
+        mins = seconds // 60
+        secs = seconds % 60
+        print(f"\r{NEON}{mins:02d}:{secs:02d}{RESET}", end="")
+        time.sleep(1)
+        seconds -= 1
+
+    print(GREEN + "\n\nPomodoro Completed!" + RESET)
+
+# ================== MAIN APP ==================
+while True:
+    clear()
+    banner()
+    show_status()
+
+    print(WHITE + "Choose Energy Level:")
+    print("1. Low   (15 min)")
+    print("2. Medium(25 min)")
+    print("3. High  (45 min)")
+    print("0. Exit\n" + RESET)
+
+    choice = input("Your choice: ")
+
+    if choice == "0":
+        clear()
+        print(NEON + "Goodbye. Progress > Perfection.\n" + RESET)
+        break
+
+    if choice not in energy_levels:
+        continue
+
+    energy_name, pomodoro_time = energy_levels[choice]
+
+    clear()
+    banner()
+    print(GRAY + f"Energy: {energy_name}")
+    print(GRAY + f"Minimum Action: {habit['minutes']} minutes\n" + RESET)
+
+    start = input("Start Pomodoro? (y/n): ")
+
+    if start.lower() == "y":
+        start_pomodoro(pomodoro_time)
+        habit["history"].append(today())
+
+        # Difficulty increase logic
+        if len(habit["history"]) >= 3:
+            last_three = habit["history"][-3:]
+            if all((today() - d).days == 0 for d in last_three):
+                increase_difficulty()
+
+        input("\nPress Enter to continue...")
+
+    else:
+        print(RED + "\nSkipped. Skipping is data, not failure." + RESET)
+        time.sleep(2)
